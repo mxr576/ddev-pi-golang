@@ -27,15 +27,15 @@ tar -C /usr/local -xzf go.tar.gz
 rm go.tar.gz
 
 # Create Go cache directories (avoid /tmp noexec restrictions)
-mkdir -p /home/pi/.cache/go-tmp
-mkdir -p /home/pi/.cache/go-build
-chown -R pi:pi /home/pi/.cache
+mkdir -p "${USER_HOME}/.cache/go-tmp"
+mkdir -p "${USER_HOME}/.cache/go-build"
+chown -R "${USER_UID}:${USER_GID}" "${USER_HOME}/.cache"
 
-# Create wrappers in /usr/local/bin so Go commands are in PATH for all contexts
+# Create wrapper in /usr/local/bin so Go commands are in PATH for all contexts
 echo '#!/bin/sh' > /usr/local/bin/go
-echo 'export GOPATH="${GOPATH:-/home/pi/go}"' >> /usr/local/bin/go
-echo 'export GOBIN="${GOBIN:-/home/pi/go/bin}"' >> /usr/local/bin/go
-echo 'export GOTMPDIR="${GOTMPDIR:-/home/pi/.cache/go-tmp}"' >> /usr/local/bin/go
+echo "export GOPATH=\"\${GOPATH:-${USER_HOME}/go}\"" >> /usr/local/bin/go
+echo "export GOBIN=\"\${GOBIN:-${USER_HOME}/go/bin}\"" >> /usr/local/bin/go
+echo "export GOTMPDIR=\"\${GOTMPDIR:-${USER_HOME}/.cache/go-tmp}\"" >> /usr/local/bin/go
 echo 'export PATH="/usr/local/go/bin:${GOBIN}:${PATH}"' >> /usr/local/bin/go
 echo 'exec /usr/local/go/bin/go "$@"' >> /usr/local/bin/go
 chmod +x /usr/local/bin/go
