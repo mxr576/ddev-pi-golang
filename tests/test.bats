@@ -39,17 +39,79 @@ setup() {
 }
 
 health_checks() {
-  # Do something useful here that verifies the add-on
-
-  # You can check for specific information in headers:
-  # run curl -sfI https://${PROJNAME}.ddev.site
-  # assert_output --partial "HTTP/2 200"
-  # assert_output --partial "test_header"
-
-  # Or check if some command gives expected output:
-  DDEV_DEBUG=true run ddev launch
+  # Start the pi container profile
+  echo "# Starting pi container profile..." >&3
+  run ddev start --profiles=pi
   assert_success
-  assert_output --partial "FULLURL https://${PROJNAME}.ddev.site"
+  
+  # Verify Go is installed and working
+  run ddev exec -s pi go version
+  assert_success
+  assert_output --partial "go version"
+
+  # Verify gopls (Language Server) is installed
+  run ddev exec -s pi gopls version
+  assert_success
+
+  # Verify goimports is installed
+  run ddev exec -s pi which goimports
+  assert_success
+  assert_output --partial "/goimports"
+
+  # Verify golangci-lint is installed
+  run ddev exec -s pi golangci-lint --version
+  assert_success
+  assert_output --partial "golangci-lint"
+
+  # Verify staticcheck is installed
+  run ddev exec -s pi staticcheck -version
+  assert_success
+
+  # Verify govulncheck is installed
+  run ddev exec -s pi which govulncheck
+  assert_success
+  assert_output --partial "/govulncheck"
+
+  # Verify Go environment variables are set
+  run ddev exec -s pi bash -c 'echo $GOPATH'
+  assert_success
+  assert_output --partial "/home/pi/go"
+
+  # Test creating a simple Go program in home directory (not /tmp due to noexec)
+  run ddev exec -s pi bash -c 'mkdir -p $HOME/gotest'
+  assert_success
+  
+  run ddev exec -s pi bash -c 'cd $HOME/gotest && cat > main.go << "EOF"
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello from Pi Golang!")
+}
+EOF'
+  assert_success
+
+  # Initialize a Go module
+  run ddev exec -s pi bash -c 'cd $HOME/gotest && go mod init example.com/hello'
+  assert_success
+
+  # Run the Go program
+  run ddev exec -s pi bash -c 'cd $HOME/gotest && go run main.go'
+  assert_success
+  assert_output --partial "Hello from Pi Golang!"
+
+  # Test goimports formatting
+  run ddev exec -s pi bash -c 'cd $HOME/gotest && goimports -l main.go'
+  assert_success
+
+  # Test go build
+  run ddev exec -s pi bash -c 'cd $HOME/gotest && go build'
+  assert_success
+
+  # Clean up
+  run ddev exec -s pi bash -c 'rm -rf $HOME/gotest'
+  assert_success
 }
 
 teardown() {

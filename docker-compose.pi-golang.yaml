@@ -1,15 +1,16 @@
 #ddev-generated
+# This addon extends the base ddev-pi addon with Go development capabilities
 services:
-  pi-golang:
-    container_name: ddev-${DDEV_SITENAME}-pi-golang
-    image: ${PI_GOLANG_DOCKER_IMAGE:-ddev/ddev-utilities:latest}
-    command: tail -f /dev/null
-    restart: "no"
-    # These labels ensure this service is discoverable by DDEV.
-    labels:
-      com.ddev.site-name: ${DDEV_SITENAME}
-      com.ddev.approot: ${DDEV_APPROOT}
-
-    volumes:
-      - ".:/mnt/ddev_config"
-      - "ddev-global-cache:/mnt/ddev-global-cache"
+  pi:
+    environment:
+      # Go version configuration (check latest: https://go.dev/VERSION?m=text)
+      GOLANG_VERSION: ${GOLANG_VERSION:-1.26.4}
+      GOLANGCI_LINT_VERSION: ${GOLANGCI_LINT_VERSION:-1.62.2}
+      # Go environment variables
+      GOPATH: "/home/pi/go"
+      GOBIN: "/home/pi/go/bin"
+      GO111MODULE: "on"
+      GOCACHE: "/home/pi/.cache/go-build"
+      GOMODCACHE: "/home/pi/go/pkg/mod"
+      # GOTMPDIR: Set to home directory to avoid /tmp noexec restrictions
+      GOTMPDIR: "/home/pi/.cache/go-tmp"
